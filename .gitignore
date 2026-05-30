@@ -1,0 +1,7 @@
+# Temporary files and backups
+*.bak
+*.tmp
+.DS_Store
+
+# Development scratch directories
+scratch/

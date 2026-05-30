@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧩 Word Chain - 直感フレーズビルダー</title>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* プレミアム・パステルカラーパレット (クレイモフィズムに最適化) */
+            --bg-color: #f0f4f9;
+            --clay-bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-shadow: rgba(79, 70, 229, 0.2);
+            
+            --success: #10b981;
+            --success-light: #34d399;
+            
+            --danger: #ef4444;
+            --danger-light: #f87171;
+            
+            --gold: #f59e0b;
+            
+            /* クレイモフィズム特有の3Dシャドウ効果 */
+            --clay-shadow-out: 8px 8px 16px rgba(163, 177, 198, 0.5), -8px -8px 16px rgba(255, 255, 255, 0.8);
+            --clay-shadow-in: inset 3px 3px 6px rgba(163, 177, 198, 0.3), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+            
+            --clay-btn-shadow: 5px 5px 10px rgba(163, 177, 198, 0.4), -5px -5px 10px rgba(255, 255, 255, 0.9);
+            --clay-btn-shadow-active: inset 2px 2px 5px rgba(163, 177, 198, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Outfit', 'Noto Sans JP', 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景のソフトなグラデーション球 (奥行き感を演出) */
+        .bg-glow-1 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.15) 0%, rgba(255,255,255,0) 70%);
+            top: -50px;
+            left: -50px;
+            z-index: -1;
+        }
+        .bg-glow-2 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.1) 0%, rgba(255,255,255,0) 70%);
+            bottom: -100px;
+            right: -100px;
+            z-index: -1;
+        }
+
+        /* メインコンテナ */
+        .container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ヘッダーエリア */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: var(--clay-bg);
+            box-shadow: var(--clay-shadow-out);
+            margin-bottom: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hearts-container {
+            display: flex;
+            gap: 4px;
+        }
+
+        .heart {
+            color: var(--danger);
+            font-size: 1.2rem;
+            filter: drop-shadow(1px 1px 2px rgba(239, 68, 68, 0.2));
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .heart.lost {
+            transform: scale(0);
+            color: #cbd5e1;
+        }
+
+        .score-box {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .progress-box {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.04);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* メインコンテンツカード */
+        .game-card {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--clay-bg);
+            border-radius: 30px;
+            box-shadow: var(--clay-shadow-out);
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+            min-height: 320px;
+        }
+
+        /* お題表示 */
+        .question-container {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .question-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .japanese-phrase {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 0 10px;
+            word-break: keep-all;
+        }
+
+        /* 英文ビルドエリア (アンサースロット) */
+        .answer-board {
+            min-height: 90px;
+            background: var(--bg-color);
+            border-radius: 20px;
+            box-shadow: var(--clay-shadow-in);
+            padding: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .answer-board.error {
+            background: #fef2f2;
+            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.1);
+            animation: shake 0.4s ease;
+        }
+
+        .answer-board.success {
+            background: #ecfdf5;
+            box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        /* 単語プールエリア */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 8px 0;
+            margin-top: auto;
+        }
+
+        /* クレイモフィズム・ワードブロック */
+        .word-block {
+            padding: 10px 18px;
+            background: var(--clay-bg);
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+            box-shadow: var(--clay-btn-shadow);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid transparent;
+        }
+
+        .word-block:active {
+            box-shadow: var(--clay-btn-shadow-active);
+            transform: scale(0.95);
+        }
+
+        /* スロット内に配置された状態のスタイル */
+        .word-block.placed {
+            background: #ffffff;
+            color: var(--primary);
+            border-color: rgba(79, 70, 229, 0.15);
+            box-shadow: 2px 2px 5px rgba(163, 177, 198, 0.2);
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* プール内で使用済みになったブロックのプレースホルダー */
+        .word-block.used {
+            opacity: 0.15;
+            pointer-events: none;
+            box-shadow: none;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* 正解・不正解時のアニメーション用クラス */
+        .word-block.placed.correct-bounce {
+            animation: bounceGreen 0.5s ease;
+            background: var(--success);
+            color: white;
+            border-color: var(--success-light);
+        }
+
+        /* 操作パネル (クリア・スキップなど) */
+        .control-panel {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--clay-btn-shadow);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .btn:active {
+            box-shadow: var(--clay-btn-shadow-active);
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: var(--clay-bg);
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: white;
+            box-shadow: 5px 5px 12px rgba(79, 70, 229, 0.3), -5px -5px 12px rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-primary:active {
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* リザルト・スタート・設定画面などのオーバーレイ */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            z-index: 10;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .screen-overlay.hidden {
+            display: none;
+        }
+
+        .screen-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.1));
+        }
+
+        .screen-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .screen-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--clay-bg);
+            border-radius: 20px;
+            padding: 12px;
+            box-shadow: var(--clay-shadow-out);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* エフェクト用 Canvas */
+        #effect-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 30px;
+            z-index: 5;
+        }
+
+        /* 隠しカスタム入力フォーム */
+        .custom-data-toggle {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .custom-data-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            width: 100%;
+            max-width: 440px;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin: 12px 0;
+            resize: none;
+        }
+
+        /* アニメーション定義 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        @keyframes bounceGreen {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); background-color: var(--success-light); }
+        }
+
+        /* ローカルデータ更新バッジ */
+        .badge {
+            background: var(--gold);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* グローバル非表示ユーティリティ (優先度競合を完璧に回避) */
+        .hidden {
+            display: none !important;
+        }
+
+        /* タイマー関連スタイル (プレミアムUI) */
+        .timer-box {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(79, 70, 229, 0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            box-shadow: inset 1px 1px 3px rgba(163, 177, 198, 0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .timer-box.warning {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+            animation: textPulse 0.5s infinite alternate ease-in-out;
+            box-shadow: inset 1px 1px 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 10px;
+            background: var(--clay-bg);
+            border-radius: 20px;
+            box-shadow: var(--clay-shadow-in);
+            margin-bottom: 16px;
+            overflow: hidden;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--success-light), var(--success));
+            border-radius: 20px;
+            transition: width 0.1s linear, background 0.3s ease;
+        }
+
+        .timer-bar.warning {
+            background: linear-gradient(90deg, var(--danger-light), var(--danger));
+            animation: barPulse 0.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes textPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.06); }
+        }
+
+        @keyframes barPulse {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+
+        /* ドラッグ＆ドロップゾーン (案A) */
+        .drop-zone {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px dashed var(--primary-light);
+            border-radius: 20px;
+            background: rgba(79, 70, 229, 0.02);
+            text-align: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: inset 1px 1px 3px rgba(163, 177, 198, 0.1);
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(79, 70, 229, 0.08);
+            border-color: var(--primary);
+            color: var(--text-main);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 1.8rem;
+            color: var(--primary-light);
+            transition: transform 0.3s ease;
+        }
+
+        .drop-zone:hover .drop-zone-icon, .drop-zone.dragover .drop-zone-icon {
+            transform: translateY(-4px) scale(1.1);
+            color: var(--primary);
+        }
+
+        .drop-zone-text {
+            font-size: 0.825rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .preview-badge {
+            margin-top: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* コース（単語帳）セレクター (クレイモーフィズム仕様) */
+        .course-selector-container {
+            width: 100%;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .course-selector-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .course-buttons {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-color);
+            padding: 6px;
+            border-radius: 20px;
+            box-shadow: var(--clay-shadow-in);
+        }
+
+        .course-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 16px;
+            border: none;
+            background: transparent;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            outline: none;
+            user-select: none;
+        }
+
+        .course-btn-sub {
+            font-size: 0.65rem;
+            font-weight: normal;
+            opacity: 0.7;
+        }
+
+        .course-btn.active {
+            background: var(--clay-bg);
+            color: var(--primary);
+            box-shadow: var(--clay-btn-shadow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="container">
+        <!-- ヘッダーエリア -->
+        <header>
+            <div class="header-left">
+                <div class="hearts-container" id="hearts-container">
+                    <i class="fa-solid fa-heart heart"></i>
+                    <i class="fa-solid fa-heart heart"></i>
+                    <i class="fa-solid fa-heart heart"></i>
+                </div>
+                <div class="score-box">
+                    <i class="fa-solid fa-trophy" style="color: var(--gold);"></i>
+                    <span id="score-display">0</span>
+                </div>
+            </div>
+            <div class="timer-box" id="timer-box">
+                <i class="fa-solid fa-hourglass-half"></i>
+                <span id="timer-display">60</span>s
+            </div>
+            <div class="progress-box">
+                <span id="current-question-num">1</span>/<span id="total-questions-num">--</span>
+            </div>
+        </header>
+
+        <!-- タイマープログレスバー (クレイ風) -->
+        <div class="timer-bar-container">
+            <div class="timer-bar" id="timer-bar"></div>
+        </div>
+
+        <!-- メインゲームカード -->
+        <div class="game-card">
+            <canvas id="effect-canvas"></canvas>
+
+            <!-- ゲームスタート画面 -->
+            <div id="start-screen" class="screen-overlay">
+                <div class="screen-icon">🧩</div>
+                <h1 class="screen-title">Word Chain</h1>
+                <p class="screen-desc">
+                    バラバラになった単語ブロックをタップして、正しい英語フレーズを完成させよう！
+                </p>
+                
+                <!-- 単語帳コース選択 (クレイ風セグメントコントロール) -->
+                <div class="course-selector-container">
+                    <div class="course-selector-label">単語帳コースの選択</div>
+                    <div class="course-buttons">
+                        <button class="course-btn active" id="btn-course-2026" onclick="selectCourse('2026_2027')">
+                            2026-2027.txt
+                            <span class="course-btn-sub">標準コース (74問)</span>
+                        </button>
+                        <button class="course-btn" id="btn-course-2025" onclick="selectCourse('2025_2026')">
+                            2025-2026.txt
+                            <span class="course-btn-sub">マージコース (329問)</span>
+                        </button>
+                        <button class="course-btn" id="btn-course-custom" onclick="selectCourse('custom')" style="display: none;">
+                            カスタム
+                            <span class="course-btn-sub" id="custom-course-sub">インポート済み</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-val" id="best-score-display">0</span>
+                        <span class="stat-lbl">ハイスコア</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val" id="total-learned-display">0</span>
+                        <span class="stat-lbl">総学習フレーズ数</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="startGame()">
+                    <i class="fa-solid fa-play"></i> ゲームスタート
+                </button>
+            </div>
+
+            <!-- ゲームオーバー画面 -->
+            <div id="game-over-screen" class="screen-overlay hidden">
+                <div class="screen-icon" style="color: var(--danger);">💀</div>
+                <h2 class="screen-title">GAME OVER</h2>
+                <p class="screen-desc">ライフがなくなってしまいました。もう一度挑戦して、フレーズを自分のものにしましょう！</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-val" id="over-score">0</span>
+                        <span class="stat-lbl">今回のスコア</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val" id="over-combo">0</span>
+                        <span class="stat-lbl">最大コンボ</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="resetGame()">
+                    <i class="fa-solid fa-rotate-left"></i> もう一度プレイ
+                </button>
+            </div>
+
+            <!-- ゲームクリア画面 (全問制覇) -->
+            <div id="clear-screen" class="screen-overlay hidden">
+                <div class="screen-icon" style="color: var(--gold);">👑</div>
+                <h2 class="screen-title">CONGRATULATIONS!</h2>
+                <p class="screen-desc">素晴らしい！収録されているすべての英語表現を完璧にマスターしました！</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-val" id="clear-score">0</span>
+                        <span class="stat-lbl">最終スコア</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val" id="clear-accuracy">100%</span>
+                        <span class="stat-lbl">クリア判定</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="resetGame()">
+                    <i class="fa-solid fa-rotate-left"></i> 最初からプレイ
+                </button>
+            </div>
+
+            <!-- 実際のゲームプレイ部分 -->
+            <div class="question-container">
+                <div class="question-label">お題（日本語）</div>
+                <div class="japanese-phrase" id="japanese-question">---</div>
+            </div>
+
+            <!-- ビルドエリア (アンサースロット) -->
+            <div class="answer-board" id="answer-board">
+                <!-- ここにタップされた単語が追加される -->
+            </div>
+
+            <!-- 単語プール -->
+            <div class="word-pool" id="word-pool">
+                <!-- ここにシャッフルされた単語ブロックが表示される -->
+            </div>
+        </div>
+
+        <!-- コントロールボタン -->
+        <div class="control-panel">
+            <button class="btn btn-secondary" onclick="clearAnswer()">
+                <i class="fa-solid fa-eraser"></i> リセット
+            </button>
+            <button class="btn btn-primary" onclick="skipQuestion()">
+                <i class="fa-solid fa-forward"></i> スキップ
+            </button>
+        </div>
+
+        <!-- 隠しカスタム入力の起動トリガー -->
+        <div class="custom-data-toggle" onclick="toggleCustomModal()">
+            <i class="fa-solid fa-gear"></i> 単語データのカスタマイズ・編集
+        </div>
+    </div>
+
+    <!-- カスタムデータ入力用モーダル -->
+    <div id="custom-modal" class="custom-data-modal hidden">
+        <div class="modal-content">
+            <h3 style="font-weight: 800; font-size: 1.15rem; color: var(--text-main);">📝 単語データの編集・入替</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 12px;">
+                ファイルをドラッグ＆ドロップするか、直接テキストをコピペしてデータをまとめてごそっと入れ替えることができます。
+            </p>
+            
+            <!-- ドラッグ＆ドロップゾーン (案A) -->
+            <div class="drop-zone" id="drop-zone">
+                <i class="fa-solid fa-file-import drop-zone-icon"></i>
+                <span class="drop-zone-text">
+                    ここに単語帳テキストファイルをドロップ<br>
+                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">または タップしてファイルを選択</span>
+                </span>
+                <div class="preview-badge" id="preview-badge">解析成功: 0問検出</div>
+            </div>
+            <input type="file" id="file-input" accept=".txt" style="display: none;">
+
+            <textarea id="custom-vocab-input" placeholder="example phrase 例文の日本語訳" style="height: 120px;"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="padding: 10px;" onclick="toggleCustomModal()">キャンセル</button>
+                <button class="btn btn-primary" style="padding: 10px;" onclick="saveCustomVocabulary()">保存して適用</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 【2026-2027.txt】および【2025-2026.txt】の完全内蔵データ
+        // ==========================================
+        const defaultVocabulary2026_2027 = `Overwhelming 圧倒されるような
+overwhelmed 圧倒される・手に負えないと感じる
+get overwhelmed 圧倒される、気後れする
+
+Good to know それはよかった　なるほど
+
+遅延
+Push back（意図的な遅延）自分の意志でずらす
+Set back（予期せぬ停滞・後退）トラブル、障害
+
+underestimate 過小評価する
+
+a track record of solving problems　問題解決してきた実績がある
+
+back and forth 行ったり来たりのやり取り、応酬
+be immersed in ~ 〜に没頭する・浸る
+be absorbed in ~ 〜に夢中になる
+
+expose さらす・明らかにする
+impose A on B AをBに押し付ける
+
+cross-cultural 異文化の
+work across cultures 異文化をまたいで働く
+intercultural environment 異文化環境
+cross-border project 国境を越えたプロジェクト
+different backgrounds 異なる背景
+work closely with ~ ～と密接に働く
+
+far from easy 決して簡単ではない
+ahead of schedule 予定より早く
+stay focused 集中を保つ
+
+pay for itself　元が取れる
+pay attention to ～　～に注意を払う
+pay off　成果が出る／報われる
+→ Our efforts finally paid off
+All your hard work paid off
+
+problem-solving abilities 問題解決能力
+hand off ~ ～を引き渡す・任せる
+without sacrificing ~ ～を犠牲にせずに
+technical know-how 技術的ノウハウ
+hidden problem　すでに存在して見えていない問題
+potential problem　まだ見えていないが将来的に問題になる可能性がある
+
+meaningful discussion　意義のある議論
+meaningful relationships　価値ある関係
+
+stop by and see　バイェン(ド)シー
+Not too hot, not too cold 暑すぎず寒すぎず
+Day by day 日ごとに
+
+将来的に
+Down the road: 漠然とした将来
+​Down the line: 順序、工程 of a 名詞「それほど〜な、あれほどの〜」
+​Down the line: 順序、工程の先にある将来
+
+breeze 楽勝なこと（口語）
+a piece of cake 朝飯前・楽勝
+
+just to be sure　念のため
+
+technical expertise 技術的専門性
+international outlook 国際的視野
+
+sum up 端的に表す、要点をまとめる
+gear up for 〜に向けてしっかり準備する
+get ready for 〜の準備をする
+
+specialize in ～を専門にする
+engaging 引き込まれる・魅力的な
+
+awkward 気まずい・ぎぎこちない、しっくりこない
+awkward 気まずい・ぎこちない、しっくりこない
+resonate with  ～の心に響く、共感を呼ぶ
+
+speak highly of ~ ～を高く評価する
+Likewise こちらこそ、同様に
+
+It’s so nice to finally get to meet you.
+get to meet you (ついに)会える機会を得る
+get to do ～する機会がある
+
+clear the screening 書類選考を通過する
+get through 通過する・乗り越える
+
+tie in with　～と一致する・うまく合う
+align with　～と一致する
+line up with　～と一致する・整合する
+
+go over ～を見直す・復習する
+go through 目を通す
+Want me to ~? ～しようか？（カジュアル）
+
+keep moving forward 前進し続ける
+reassuring 安心させる・心強い
+
+find a way to ~ ～する方法を見つける
+can I have a word ちょっと話いいですか（ややフォーマル）
+
+streamline 効率化する・無駄を省く
+inside out 隅々まで・徹底的に
+after all そもそも、結局・やはり（理由の補強）
+step out of ～から抜け出す・外に出る
+
+hard work 努力・地道な仕事
+take on ～に取り組む・引き受ける（課題・責任）
+keep moving forward 前進し続ける
+approach ~ ～に取り組む・向き合う
+all at once　全て一度に
+track 追跡する・進捗を管理する
+
+bridge (a gap)（隔たりを）埋める
+in a tall order　無理がある・難易度が高い注文
+rework 手戻り・再作業、やり直し
+step by step　少しずつ
+
+meet the deadline 締め切りに間に合う
+miss the deadline 締め切りに間に合わない
+on schedule/as planned　予定通りに
+It’s due today　今日が期限
+to be on the safe side 念のため、安全を見て
+just in case 念のため
+
+roll out 展開する・市場投入する
+launch 発売する・立ち上げる
+
+take away from 〜から(教訓・知識)を得る、学ぶ
+get down to business 本題に入る
+red flag 危険信号・問題の兆候
+
+promising　有望な
+oversee 監督する・管理する
+overseas  海外に(の)　外国へ(の)
+
+Fortunate enough, Luckilyよりフォーマル
+fortunate enough to 〜 happy to〜よりフォーマル
+
+thick：厚い・太い　(シック)
+thin：薄い・細い　(スィン)　芯=細い
+
+get used to 自分が慣れる
+get someone used to 誰かを慣れさせる
+
+recoup 取り戻す・回収する
+regain 取り戻す
+make an impact on 〜に影響(インパクト)を与える
+second-guess　後になってとやかく言う
+
+in the pipeline 進行中・計画段階
+settle in 新しい環境に慣れる・落ち着く
+
+rewarding やりがいがある・報われる
+reward　報酬、ご褒美
+
+tough / struggle → worth it / rewarding
+
+quick fix 応急処置・一時的な解決
+masterpiece 傑作
+stand out 目立つ・際立つ
+
+left and right　いたるところで、あちこち
+back-to-back 連続した・詰まっている
+
+You're a lifesaver 命の恩人・めちゃくちゃ助かる人
+go + 動詞(get/check/see/wash)　～しに行く
+
+If I had my way 私の予定で良ければ
+Hang in there 踏ん張る
+
+work out （自）運動する、うまくいく、良い結果になる、都合が合う
+work out+名詞
+work out a solution 解決策を見つける
+work out differences 意見の違いを解決する
+
+come up with 思いつく、考え出す
+figure out 解決する、理解する
+
+firsthand: 直接、直に（副詞）
+情報を自分で直接得たり、体験したりする。
+firsthand: 直接の、直接体験の（形容詞）
+
+at first glance　一見したところでは
+overlook 見落とす、見逃す
+bring out 明らかにする、引き出す
+
+clue 手がかり・ヒント
+side by side 並べて・比較して・一緒に
+
+That + 形容詞 + of a + 名詞「それほど〜な、あれほどの〜」
+It’s not that difficult of a task.
+He is that good of a leader.
+
+I’m beat クタクタだ・疲れ果てた
+grab a bite 軽く食べる
+bit of a walk 少し歩く距離
+
+I’m new to ~ ～は初めてです・初心者です
+I couldn't agree more 大賛成、この上なく同感です
+in hindsight 後から考えると・今となっては
+Look back 振り返る
+
+【発音】
+next team meeting　t-t m-mでつながる`;
+
+        const defaultVocabulary2025_2026 = `+ about + 内容
++ come all the way from ～ ～からわざわざ来る
++ put together ～ まとめる、作成する
++ with + 人
+?centric ～中心の、～を軸にした
+?driven ～主導の
+?oriented ～志向の、～重視の
+a matter of 問題・意見の分かれるところ
+absorb (知識・情報・液体を) 吸収する
+accelerate 加速させる、促進する
+account for ～を占める、～に相当する、割合を示す
+Across 横断・全域（カバー） ?の全域にわたって
+Add me to the loop 関係者として加えてください
+after party 二次会
+against this background こうした背景のもとで、これを踏まえて
+align with ～と一致する、調和する
+all around 総合的な、全体的な
+All over 点在（バラバラと存在）?の至る所で
+all the employees 全従業員
+all the more なおさら
+all things considered 総合的に考えると
+alongside ～と一緒に
+another もう一つ（不特定）
+Anything else you need? 他に必要なものは何かあるか？
+apologies 会議などへの欠席通知
+As far as I remember, 私の記憶の限りでは
+as we go along 進めながら、実際にやりなら
+Ask ... to 動詞
+associates 社員、メンバー
+at the forefront of ～の最前線で
+attribute 「属性」「特性」。性質や能力
+authentic 本物の、本格的な
+back on track 軌道に戻る, 予定通り進む
+backstory 背景　裏設定　生い立ち
+balloon 風船、急増する
+be associated with ～に関連している
+be braced for 身構える、覚悟する
+be committed to ～に全力を注いでいる、
+be committed to ?ing ～に力を入れている
+be conscious of ~ ～意識する／重視する
+be conversant with ～ ～に精通している
+be due to ～する予定だ
+be likely to ～しそうだ（可能性が高い）
+be muted マイクがミュートになっている
+be on the right track 正しい方向に進んでいる
+be required to 「～することを義務付けられている」法律・規則でよく使う。
+be required to ~ ～することを求められる
+be short on time/cash/ staff 時間、お金、人がが足りない
+be sure to ～するのは確実だ
+be unlikely to ～しそうにない（可能性が低い）
+be unmute マイクがオンになっている
+behind schedule スケジュールに遅れている
+better to have 持っていたほうがよい
+biased 偏った・偏見のある
+big 感覚的に大きい / 重要 / すごい
+break it down （問題を）分解して考える、分析する
+business driver 「事業を推進する原動力」
+by all means もちろん、ぜひどうぞ
+Can 一般的 (同僚、友人、店員さんなど)
+Can I give you a hand (with that)? お手伝いでしょうか？
+care about 大切に思う、気にかける
+cause 守る・擁護する価値のある理念や目的
+check/tick all the boxes ... 必要条件を満たす すべての条件に合致している
+clear cut 明確な、はっきりした
+clue 手がかり、ヒント
+come across clearly はっきり伝わる、理解される
+compelling 説得力のある
+complicated 複雑な・込み入った
+compromise 損なう、危険にさらす／妥協する
+consensus 合意　同意
+constructive/productive meeting 建設的な/生産的な会議
+contingency 不測の事態、偶発的な出来事
+contingency plan 不測の事態への対応計画
+conversant （形）～に詳しい、～をよく知っている
+conviction 信念、確信
+convince 相手を納得・確信させる
+convince + 人 + to + 動詞原形
+cope with 対応する、うまく対処する
+Could より丁寧 (少しためらいがある時)
+cross-functional 部門横断的な
+Curious 好奇心旺盛な
+dedicated 献身的な、専用の
+demand 強く要求する。権利・怒り・強制のニュアンスあり。
+demonstrate 実演して見せる
+desert 砂漠
+dessert デザート（食後の甘いもの
+do a deep dive/take a deep dive/a deep dive into ～
+Do you need a hand (with that)? / Can I help you?
+down the line 将来・今後、先々で
+downside 欠点、マイナス面
+downturn 景気の悪化、不況
+drive a business 「ビジネスを動かす・牽引する」
+elicit 引き出す、誘い出す
+empathize with ～に共感する
+encourage 励ます、勇気づける
+end up at 最後には～に行き着く
+enthusiasm 熱意、意欲
+essential 不可欠な
+Euro-centric ： noun + centric
+Even if + 未来・想像（仮定に使う）
+Even though + 現実・過去（事実に使う）
+every employee 各従業員
+every other day 一日おきに
+every single employee 一人残らず全従業員
+explain 理由や仕組み・内容を説明する
+Familiar with 馴染みがある　経験があるKnowledgeable about「精通している」「博識である」。専門家レベルの深い知識がある。
+feature 「特徴」「特色」。物や人の際立った点
+firsthand 直接、自分の目で
+for now とりあえず、当面のところ
+for the future 今後のために
+for the purpose of ~ 「?を目的として」
+for the sake of ~ 「?のために」「?を目的として」
+from day one 最初の日から
+from the perspective of ～の視点から
+get a head start 先に進めておく、先手を打つ
+get along 仲良くする
+get to know 知るようになる（変化・過程）
+give it a try 試してみる
+global competency/talent グローバル人材としての能力
+go ahead with ～を進める、実行する
+go deeper (into) +名詞 ～について詳しく議論する
+go for ～を選ぶ、～にする、志向する
+go on a business trip 出張に行く
+go out 出かける、外出する、売れる、出る
+Go over well うまくいく 受け入れられる
+go to ～へ行く 文脈が「移動」
+go with ～を選ぶ、～でいく、～と合う
+go-to 定番の、お気に入りの　後で名詞が来る
+going forward 今後は、これからは
+have implications for ～にとっての（将来的）影響
+head for ～へ向かう（移動の途中・進行中）
+head on 正面から（問題に）立ち向かう
+head toward / head towards に向かう
+highlight 強調する、目立たせる=>重視する
+How so? どういう意味？／どうしてそう思うの？
+humble/modest 謙虚な、控えめな
+I suggest/propose/recommend we (should) take a taxi.
+I was reminded of ～を思い出した
+identfy which parts... 切り分ける
+if anything むしろ／どちらかといえば
+If I remember correctly, 私の記憶が正しければ
+If worse comes to worst いざとなったら、最悪の場合は
+illustrate 例を出して説明する／図で示す
+illustrate my point は決まり文句
+immensely 非常に、ものすごく（ややフォーマル）
+implications 予想される影響・結果
+in a positive light 前向きに捉えると
+in depth 深く・徹底的に。副詞句。
+In line with ～
+in order to ~ 「?するために」
+In other words, 要約・結論、
+in terms of/perspective/-wise に関して、?的に
+in the long run 長期的には
+in the meantime その間に、同時に
+intensive 集中的な、集中した
+It (all) comes down to ...要するに、結局は?
+It reminds me of ～を思い出させる
+It turns out (that) ... ～だとわかる
+It's all about ～ 結局?がすべて、要は?だ
+it’s only normal 当然のことだ、当たり前だ
+I’m surviving. なんとかやっている（カジュアル）
+just say ~ 例えば～として（補足的仮定）
+just to be sure 念押しで確認、間違いないか確認
+just to make sure 念のため確認する
+Keep me in the loop 最新情報を共有してください
+Keep you in the loop あなたに随時共有します
+keep you posted 進捗を知らせる/情報を随時伝える
+keep ~ in mind ～を念頭に置いて、考慮して
+know すでに知っている（状態）
+large 物理的サイズや数量が大きい
+leave no stone unturned あらゆる可能性を検討する
+Let me put it this/another way, 言い換えると
+let’s say 仮に?としよう
+Let’s say ~ 仮に～としよう（例え話）
+leverage 活用する、効果的に利用する
+look after 面倒を見る、世話をする
+look into ~ ～を調べる
+make a difference (+ in ...)　に違いを生む
+make decisions 意思決定する
+make efforts 努力する、尽力する
+make progress 進歩する
+make sure to 必ず～する、忘れずに～する
+make the deadline 期限に間に合う
+make the effort to ～ 努力して～する。
+make use of ~ ～を活用する
+matter (動詞) 重要である
+May 丁寧 (目上の方、ビジネス)
+meticulously 綿密に、細部まで注意深く
+moderate 適度な、ほどほどの
+more affordable より手頃な価格
+move forward 前進する
+move things forward 物事を前に進める
+must have 必須のもの。要件・戦略の核心
+narrative 物語、ストーリーライン、語りの視点
+nice to have あれば望ましいが必須ではないもの
+No matter where どこであっても・どこへ行っても
+no other 他のどれとも違う
+not just ~ but also ~ ～だけでなく～も
+optimistic 楽観的な　前向きな
+optimistic about ~ ～に対して楽観的である
+optimum 最適な
+order 命令・指示する
+order + 人 + to + 動詞原形
+others 他のもの（複数・不特定）
+outperform 凌駕する　 ～を上回る
+outperform last year 前年を上回る
+outperform other candidates 他の候補を上回る
+outperform U.S. stocks 米国株を上回る
+oversee 取りまとめる、監督する、統括する
+overstatement 誇張、言い過ぎ
+overwhelming 圧倒的な、非常に大きな・強い
+pay off 努力・投資が報われる、実を結ぶ
+persevere 困難に耐える、粘り強くやり抜く
+persuade 相手を説得して行動させる
+persuade + 人 + into + ～ing
+petro/hybrid/electronic car ガソリン/ハイブリッド/電気車
+phenomenal 驚異的な、並外れた、素晴らしい
+pick out （複数の中から）選ぶ、見つけ出す
+pick up 受け取る・取りに行く、習得する、拾う
+Please fire away （質問・発言）どうぞ遠慮なく！
+pompous 尊大な、偉そうな
+pop in/stop by/drop in 立ち寄る
+possible questions 想定質問
+practice + 名詞（行動・習慣）～を実践する/～を習慣として行う
+predecessor 「前任者／前の型・前バージョン」。<->successor
+prestige 名声、威信
+presume 推定する、仮定する
+principle 原則・信条
+profit driven 利益優先の、利益を目的とした
+profound 深刻な、重大な
+progressive 進歩的な、革新的な
+promising 将来有望な、見込みのある
+prosper 繁栄する、順調に成功する
+push/set back 遅らせる
+put all one’s eggs in one basket 一点集中する
+put into action 行動に移す、実践する
+put together まとめる、組み立てる、用意する
+reasonable 理にかなった、妥当な
+relate to (動詞) ?に共感する、?に関連する
+request 要請する・依頼する。丁寧でフォーマル、強制力は弱い。
+require 客観的に「必須条件として必要とする」
+resilience 回復力、困難に耐える力
+resonate with 共鳴する　共感する
+respective それぞれの・各自の
+respectively それぞれ（副詞）
+ruin 台無しにする、壊す
+run out of (runは線状)
+Run over 簡単に振り返る、ざっと確認する
+run/walk/take (me/us) through
+scoop up 人より早く手に入れる
+send one’s apologies 欠席の知らせを伝える。
+send one’s apologies /s?nd w?nz ??p??l?d?iz/ （本人の代わりに）欠席の知らせを伝える。ビジネスで使う丁寧な表現。
+sensible 分別がある、賢明な、実用的
+set back （進捗を）後退させる、遅らせる
+set/put aside 取っておく、蓄える、確保する
+settle in 新しい環境や状況に慣れる、落ち着く
+shortlist 候補を絞る、最終候補リストに載せる
+should 義務・推奨 「どうすべきか」
+smooth things out 問題や対立を解消する、物事を円滑にする
+soil 土壌
+sophisticated 高度な、洗練された
+speaking of which そういえば、その話で思い出したけど
+Speaking of which, そういえば
+specifically 「特に・具体的には」
+stand out 目立つ、際立つ
+stay on schedule スケジュールを守る、予定通りにやる
+stick to ～に専念する、～に固執する
+sticking point 交渉などで行き詰まる原因、障害となる問題
+straight away / right away すぐに、直ちに
+streamline 効率化する、合理化する
+struggle (verb) 奮闘する、困難に立ち向かう
+stuck up 気気取った、偉そう
+stunning 驚くほど素晴らしい
+substantially 大いに、しっかりと
+suitable 適した、ふさわしい
+take action 行動を起こす
+take action for ～のために行動を起こす
+take in （情報・状況を）理解する、吸収する
+take the time to ~ 時間をかけて～する
+taste/opinion 好み/意見が分かれる
+Thanks for taking the trouble to ～
+That is (probably) why
+That's the point of ～「～こそが本質／理由」
+The approach is too risky.?? 危険すぎる(止めたい)
+the bright side 明るい面（良い面）
+the dark side 暗い面（悪い面）
+the former / the latter 前者／後者
+the full picture/the whole story 全体像、全容
+the others 残り全部（特定）
+think ~ through ～をよく考え抜く
+Thinking outside the box 固定概念にとらわれない
+thorough 徹底的な、念入りな
+thoroughly 徹底的に、完全に
+throw a party パーティーを開く（口語表現）
+time/money/luck 時間/お金/運の問題
+touch base 連絡を取る、状況を確認する
+trait 「特性」「性格の特徴」。人の性格
+tremendous ものすごい、莫大な、素晴らしい
+tremendous progress/job 非常に大きい進捗/仕事
+tremendously 非常に、大変、とても
+Try as best I could できる限りの努力はしたものの
+undermine 損なう、弱める
+understatement 控えめな表現
+Unlike last year, 去年とは違い
+Unlike the previous model, 従来モデルと違い
+upside 利点、プラス面
+valid question 妥当な質問、もっともな質問
+value (動詞) ?を重視する、大切にする
+vibrant 活気のある／勢いのある
+vital 極めて重要な
+we don't want to cut corners on 手を抜く、近道をする
+We’re almost there 目標達成が間近である
+We’re nearly there もうすぐ到着する
+Whatever 何が?でも
+what’s the verdict? 感想は？評価は？
+When it comes to ~ ～の話になると
+whereabouts どのあたりで、所在、行方
+whereas/on the other hand 一方で
+Whoever 誰が?でも
+will 未来の行動・計画 「?するつもり／予定」
+work backward 逆算する
+work closely with ～と緊密に連携/協力/連動する
+work-related issues 仕事上の話題
+worth + 動名詞（?ing）?する価値がある
+worth + -ing ～する価値がある
+worth considering 検討に値する
+worth mentioning 言言及する価値がある
+worth trying 試す価値がある
+worth watching/going/checking 見る/行く/確認する価値がある`;
+
+        // ==========================================
+        // 2. 音声合成モジュール (SoundSynth)
+        // ==========================================
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playTone(freq, type = 'sine', duration = 0.2) {
+                this.init();
+                if (!this.ctx) return;
+                
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {
+                    console.log("Audio play failed: ", e);
+                }
+            }
+
+            playTap() {
+                this.playTone(523.25, 'sine', 0.08); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.15), 50); // E5
+            }
+
+            playIncorrect() {
+                this.playTone(150, 'sawtooth', 0.3); // 低いブザー
+            }
+
+            playSuccess() {
+                this.playTone(523.25, 'triangle', 0.1); // C5
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.1), 80); // E5
+                setTimeout(() => this.playTone(783.99, 'triangle', 0.1), 160); // G5
+                setTimeout(() => this.playTone(1046.50, 'triangle', 0.25), 240); // C6
+            }
+
+            playCourseSelect() {
+                this.playTone(450, 'sine', 0.1);
+            }
+
+            playTick() {
+                this.playTone(800, 'sine', 0.02); // 高いカチ音
+            }
+
+            playGameOver() {
+                this.playTone(180, 'sawtooth', 0.5);
+                setTimeout(() => this.playTone(120, 'sawtooth', 0.6), 200);
+            }
+
+            playGameClear() {
+                this.playTone(523.25, 'sine', 0.15);
+                setTimeout(() => this.playTone(659.25, 'sine', 0.15), 100);
+                setTimeout(() => this.playTone(783.99, 'sine', 0.15), 200);
+                setTimeout(() => this.playTone(1046.50, 'sine', 0.5), 300);
+            }
+
+            playButton() {
+                this.playTone(600, 'sine', 0.1);
+            }
+
+            playError() {
+                this.playTone(200, 'sawtooth', 0.25);
+            }
+
+            playReset() {
+                this.playTone(300, 'sine', 0.1);
+            }
+
+            playSkip() {
+                this.playTone(400, 'sine', 0.15);
+            }
+        }
+
+        // ==========================================
+        // 3. 演出エフェクトモジュール (ConfettiEffect)
+        // ==========================================
+        class ConfettiEffect {
+            constructor(canvasElement) {
+                this.canvas = canvasElement;
+                this.ctx = canvasElement.getContext('2d');
+                this.particles = [];
+                this.animationFrameId = null;
+                this.initCanvasSize();
+                window.addEventListener('resize', () => this.initCanvasSize());
+            }
+
+            initCanvasSize() {
+                const rect = this.canvas.parentNode.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+
+            spawn() {
+                const colors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7', '#6366f1'];
+                this.particles = [];
+                for (let i = 0; i < 60; i++) {
+                    this.particles.push({
+                        x: this.canvas.width / 2,
+                        y: this.canvas.height / 2 - 40,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.7) * 12,
+                        size: Math.random() * 8 + 4,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        angle: Math.random() * 360,
+                        spin: (Math.random() - 0.5) * 10
+                    });
+                }
+                if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+                this.update();
+            }
+
+            update() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                let alive = false;
+                
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // 重力加速度
+                    p.vx *= 0.98; // 空気抵抗
+                    p.angle += p.spin;
+
+                    if (p.y < this.canvas.height && p.x > 0 && p.x < this.canvas.width) {
+                        alive = true;
+                        this.ctx.save();
+                        this.ctx.translate(p.x, p.y);
+                        this.ctx.rotate(p.angle * Math.PI / 180);
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                        this.ctx.restore();
+                    }
+                });
+
+                if (alive) {
+                    this.animationFrameId = requestAnimationFrame(() => this.update());
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. データ解析モジュール (VocabularyParser)
+        // ==========================================
+        class VocabularyParser {
+            static get completionMap() {
+                return {
+                    "Our efforts finally paid off": "私たちの努力がようやく実を結んだ。",
+                    "All your hard work paid off": "あなたのこれまでの努力が報われた。",
+                    "stop by and see": "立ち寄って様子を見る、会いに行く",
+                    "It’s so nice to finally get to meet you.": "ついに直接お会いできて本当に嬉しいです。",
+                    "It’s not that difficult of a task.": "それほど難しいタスクではない。",
+                    "He is that good of a leader.": "彼はそれほど優秀なリーダーだ。",
+                    "fortunate enough to": "（Luckilyやhappy toよりフォーマルに）幸運にも〜できる"
+                };
+            }
+
+            static get skipLines() {
+                return [
+                    "遅延", "将来的に", "【発音】",
+                    "tough / struggle", "go + 動詞", "work out+名詞", "That + 形容詞",
+                    "next team meeting", "Fortunate enough, Luckilyよりフォーマル"
+                ];
+            }
+
+            static parse(text) {
+                // 改行コードで正しく分割する（バックスラッシュを確実に二重エスケープして書き出す）
+                const lines = text.split(/\r?\n/);
+                const parsedData = [];
+                
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (!line) continue;
+                    if (this.skipLines.some(skip => line.includes(skip))) continue;
+                    
+                    if (line.startsWith("情報を自分で直接得たり")) {
+                        if (parsedData.length > 0) {
+                            parsedData[parsedData.length - 1].japanese += "（情報を自分で直接得たり、体験したりする）";
+                        }
+                        continue;
+                    }
+
+                    // 矢印マークの安全なクレンジング
+                    if (line.indexOf("→") === 0) {
+                        line = line.substring(1).trim();
+                    }
+
+                    let english = "";
+                    let japanese = "";
+
+                    let foundInMap = false;
+                    for (const [engKey, japVal] of Object.entries(this.completionMap)) {
+                        if (line.startsWith(engKey)) {
+                            english = engKey;
+                            japanese = japVal;
+                            foundInMap = true;
+                            break;
+                        }
+                    }
+
+                    if (foundInMap) {
+                        parsedData.push({ english, japanese });
+                        continue;
+                    }
+
+                    if (line.includes("：") || line.includes(":")) {
+                        const parts = line.split(/[:：]/);
+                        english = parts[0].trim();
+                        japanese = parts.slice(1).join(":").trim();
+                    } else {
+                        // バックスラッシュに依存しない極めて堅牢な正規表現
+                        // 英語部（アルファベット、スペース、一部の英語記号）と、非英語（日本語部）を切り分ける
+                        const match = line.match(/^([a-zA-Z '’\-\?\!\,\.\~\/]+)([^a-zA-Z '’\-\?\!\,\.\~\/].*)$/);
+                        if (match) {
+                            english = match[1].trim();
+                            japanese = match[2].trim();
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    if (english && japanese) {
+                        parsedData.push({
+                            english: english.trim(),
+                            japanese: japanese.trim()
+                        });
+                    }
+                }
+                return parsedData;
+            }
+
+            static cleanEnglish(english) {
+                let clean = english;
+                // バックスラッシュを回避する安全な置換処理
+                clean = clean.replace(/~/g, '');
+                clean = clean.replace(/～/g, '');
+                clean = clean.replace(/\./g, '');
+                clean = clean.replace(/\?/g, '');
+                clean = clean.replace(/!/g, '');
+                clean = clean.replace(/\(/g, ' ');
+                clean = clean.replace(/\)/g, ' ');
+                clean = clean.replace(/（/g, ' ');
+                clean = clean.replace(/）/g, ' ');
+                clean = clean.replace(/\s+/g, ' ').trim();
+                return clean;
+            }
+        }
+
+        // ==========================================
+        // 5. ゲームエンジン (GameEngine)
+        // ==========================================
+        class GameEngine {
+            constructor(sound, effect) {
+                this.sound = sound;
+                this.effect = effect;
+                
+                // コアステート
+                this.allQuestions = [];
+                this.questionQueue = [];
+                this.currentQuestion = null;
+                this.userSelection = [];
+                this.poolWords = [];
+                
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.lives = 3;
+                
+                this.currentActiveVocab = '2026_2027';
+                this.timerInterval = null;
+                this.timeLeft = 60;
+                this.maxTime = 90;
+                
+                // 外部 UI 更新用のリスナー
+                this.onStateChange = null; 
+                this.onGameOver = null;
+                this.onGameClear = null;
+                this.onNextQuestion = null;
+            }
+
+            // 動的にコースのテキストデータを取得
+            getActiveVocabText() {
+                if (this.currentActiveVocab === '2025_2026') {
+                    return defaultVocabulary2025_2026;
+                } else if (this.currentActiveVocab === 'custom') {
+                    return localStorage.getItem('custom_vocabulary_text') || defaultVocabulary2026_2027;
+                } else {
+                    return defaultVocabulary2026_2027;
+                }
+            }
+
+            // ハイブリッド自動読み込み（CORSを考慮）
+            async loadVocabData() {
+                let text = this.getActiveVocabText();
+                
+                // CORS制限がない場合はローカルファイル（2026-2027.txt など）の最新版取得を試みる
+                try {
+                    let filename = '';
+                    if (this.currentActiveVocab === '2026_2027') {
+                        filename = '2026-2027.txt';
+                    } else if (this.currentActiveVocab === '2025_2026') {
+                        filename = '2025-2026.txt';
+                    }
+                    
+                    if (filename) {
+                        const response = await fetch(filename);
+                        if (response.ok) {
+                            const fetchedText = await response.text();
+                            if (fetchedText && fetchedText.trim()) {
+                                text = fetchedText;
+                                console.log(`Successfully fetched latest data from ${filename}`);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log("Local fetch failed (falling back to built-in data):", e.message);
+                }
+                
+                this.allQuestions = VocabularyParser.parse(text);
+                return this.allQuestions;
+            }
+
+            selectCourse(courseId) {
+                this.sound.init();
+                this.currentActiveVocab = courseId;
+                this.sound.playCourseSelect();
+            }
+
+            startGame() {
+                this.sound.init();
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.lives = 3;
+                this.timeLeft = 60;
+
+                // シャッフルして出題キューを作成
+                this.questionQueue = [...this.allQuestions];
+                this.shuffleArray(this.questionQueue);
+                
+                this.startTimer();
+                this.nextQuestion();
+            }
+
+            nextQuestion() {
+                this.userSelection = [];
+
+                if (this.questionQueue.length === 0) {
+                    this.gameClear();
+                    return;
+                }
+
+                this.currentQuestion = this.questionQueue.shift();
+                
+                const cleanEng = VocabularyParser.cleanEnglish(this.currentQuestion.english);
+                const targetWords = cleanEng.split(' ');
+                
+                this.poolWords = targetWords.map((word, idx) => {
+                    return { id: idx, text: word, isUsed: false };
+                });
+
+                if (this.onNextQuestion) {
+                    this.onNextQuestion(this.currentQuestion, this.poolWords, targetWords);
+                }
+                
+                this.notifyState();
+            }
+
+            handleWordTap(wordObj, onSuccessTap, onErrorTap) {
+                if (wordObj.isUsed) return;
+                this.sound.init();
+
+                const expectedWords = VocabularyParser.cleanEnglish(this.currentQuestion.english).split(' ');
+                const currentExpected = expectedWords[this.userSelection.length];
+
+                if (wordObj.text.toLowerCase() === currentExpected.toLowerCase()) {
+                    // 正解
+                    wordObj.isUsed = true;
+                    this.userSelection.push(wordObj);
+                    this.sound.playTap();
+
+                    if (onSuccessTap) onSuccessTap(wordObj, this.userSelection.length - 1);
+
+                    // 完成チェック
+                    if (this.userSelection.length === expectedWords.length) {
+                        this.handleQuestionSuccess();
+                    }
+                } else {
+                    // 不正解
+                    this.lives--;
+                    this.combo = 0;
+                    this.sound.playIncorrect();
+                    
+                    // 時間減少ペナルティ (-5秒)
+                    this.timeLeft = Math.max(this.timeLeft - 5, 0);
+                    
+                    if (onErrorTap) onErrorTap();
+
+                    if (this.lives <= 0 || this.timeLeft <= 0) {
+                        this.stopTimer();
+                        if (this.onGameOver) setTimeout(() => this.onGameOver(), 600);
+                    }
+                }
+                this.notifyState();
+            }
+
+            handleQuestionSuccess() {
+                this.combo++;
+                if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+                // タイムボーナス (+8秒, 最大90秒)
+                this.timeLeft = Math.min(this.timeLeft + 8, this.maxTime);
+
+                const basePoints = 100;
+                const pointsGained = Math.round(basePoints * (1 + (this.combo - 1) * 0.1));
+                this.score += pointsGained;
+
+                this.sound.playSuccess();
+                this.effect.spawn();
+
+                if (this.onStateChange) this.onStateChange('correct');
+
+                setTimeout(() => this.nextQuestion(), 1200);
+            }
+
+            clearAnswer() {
+                this.userSelection = [];
+                this.poolWords.forEach(w => w.isUsed = false);
+                this.sound.playReset();
+                this.notifyState();
+            }
+
+            skipQuestion() {
+                this.sound.playSkip();
+                this.questionQueue.push(this.currentQuestion);
+                this.nextQuestion();
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    this.notifyState();
+                    
+                    if (this.timeLeft <= 10 && this.timeLeft > 0) {
+                        this.sound.playTick();
+                    }
+                    
+                    if (this.timeLeft <= 0) {
+                        this.stopTimer();
+                        if (this.onGameOver) this.onGameOver();
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            gameClear() {
+                this.stopTimer();
+                this.sound.playGameClear();
+                
+                // コース別の総習得数を保存
+                let totalLearned = parseInt(localStorage.getItem('wc_total_learned_' + this.currentActiveVocab) || 0);
+                totalLearned += this.allQuestions.length;
+                localStorage.setItem('wc_total_learned_' + this.currentActiveVocab, totalLearned);
+                
+                this.saveHighScore();
+                if (this.onGameClear) this.onGameClear();
+            }
+
+            saveHighScore() {
+                const currentBest = parseInt(localStorage.getItem('wc_best_score_' + this.currentActiveVocab) || 0);
+                if (this.score > currentBest) {
+                    localStorage.setItem('wc_best_score_' + this.currentActiveVocab, this.score);
+                }
+            }
+
+            notifyState() {
+                if (this.onStateChange) this.onStateChange();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+        }
+
+        // ==========================================
+        // 6. UI・操作制御モジュール (UIController)
+        // ==========================================
+        class UIController {
+            constructor(engine) {
+                this.engine = engine;
+                
+                // UIキャッシュ(ゲッター方式)
+                this.dom = {
+                    get heartsContainer() { return document.getElementById('hearts-container'); },
+                    get scoreDisplay() { return document.getElementById('score-display'); },
+                    get currentQuestionNum() { return document.getElementById('current-question-num'); },
+                    get totalQuestionsNum() { return document.getElementById('total-questions-num'); },
+                    get japaneseQuestion() { return document.getElementById('japanese-question'); },
+                    get answerBoard() { return document.getElementById('answer-board'); },
+                    get wordPool() { return document.getElementById('word-pool'); },
+                    get timerBox() { return document.getElementById('timer-box'); },
+                    get timerDisplay() { return document.getElementById('timer-display'); },
+                    get timerBar() { return document.getElementById('timer-bar'); },
+                    
+                    get startScreen() { return document.getElementById('start-screen'); },
+                    get gameOverScreen() { return document.getElementById('game-over-screen'); },
+                    get clearScreen() { return document.getElementById('clear-screen'); },
+                    
+                    get bestScoreDisplay() { return document.getElementById('best-score-display'); },
+                    get totalLearnedDisplay() { return document.getElementById('total-learned-display'); },
+                    
+                    get overScore() { return document.getElementById('over-score'); },
+                    get overCombo() { return document.getElementById('over-combo'); },
+                    get clearScore() { return document.getElementById('clear-score'); },
+                    get clearAccuracy() { return document.getElementById('clear-accuracy'); },
+                    
+                    get customModal() { return document.getElementById('custom-modal'); },
+                    get customVocabInput() { return document.getElementById('custom-vocab-input'); },
+                    get dropZone() { return document.getElementById('drop-zone'); },
+                    get fileInput() { return document.getElementById('file-input'); },
+                    get previewBadge() { return document.getElementById('preview-badge'); }
+                };
+
+                this.bindEngineEvents();
+                this.bindDOMEvents();
+            }
+
+            bindEngineEvents() {
+                this.engine.onStateChange = (event) => {
+                    this.updateStatsUI();
+                    this.updateTimerUI();
+                    
+                    if (event === 'correct') {
+                        // 正解アニメーション
+                        const slots = this.dom.answerBoard.querySelectorAll('.placed');
+                        slots.forEach((s, idx) => {
+                            setTimeout(() => {
+                                s.classList.add('correct-bounce');
+                            }, idx * 40);
+                        });
+                    }
+                };
+
+                this.engine.onGameOver = () => {
+                    this.dom.overScore.textContent = this.engine.score;
+                    this.dom.overCombo.textContent = this.engine.maxCombo;
+                    this.dom.gameOverScreen.classList.remove('hidden');
+                    this.engine.saveHighScore();
+                    this.loadUserDataUI();
+                };
+
+                this.engine.onGameClear = () => {
+                    this.dom.clearScore.textContent = this.engine.score;
+                    this.dom.clearAccuracy.textContent = "全問完全制覇!";
+                    this.dom.clearScreen.classList.remove('hidden');
+                    this.engine.saveHighScore();
+                    this.loadUserDataUI();
+                };
+
+                this.engine.onNextQuestion = (question, pool, targetWords) => {
+                    this.dom.answerBoard.innerHTML = '';
+                    this.dom.answerBoard.className = 'answer-board';
+                    
+                    // 進行度と日本語問題の更新
+                    const currentNum = this.engine.allQuestions.length - this.engine.questionQueue.length;
+                    this.dom.currentQuestionNum.textContent = currentNum;
+                    this.dom.japaneseQuestion.textContent = question.japanese;
+
+                    // スロット枠の動的生成
+                    targetWords.forEach(() => {
+                        const slot = document.createElement('div');
+                        slot.className = 'word-block placed';
+                        slot.style.visibility = 'hidden';
+                        slot.style.borderStyle = 'dashed';
+                        slot.style.borderColor = 'var(--text-muted)';
+                        this.dom.answerBoard.appendChild(slot);
+                    });
+
+                    // ワードプールのシャッフルと描画
+                    const shuffledPool = [...pool];
+                    this.engine.shuffleArray(shuffledPool);
+                    this.renderWordPool(shuffledPool);
+                };
+            }
+
+            bindDOMEvents() {
+                // ドラッグ＆ドロップ関連
+                const dropZone = this.dom.dropZone;
+                const fileInput = this.dom.fileInput;
+                if (dropZone && fileInput) {
+                    dropZone.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) this.handleFileImport(file);
+                    });
+                    dropZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        dropZone.classList.add('dragover');
+                    });
+                    ['dragleave', 'dragend'].forEach(type => {
+                        dropZone.addEventListener(type, () => {
+                            dropZone.classList.remove('dragover');
+                        });
+                    });
+                    dropZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        dropZone.classList.remove('dragover');
+                        const file = e.dataTransfer.files[0];
+                        if (file) this.handleFileImport(file);
+                    });
+                }
+            }
+
+            async selectCourse(courseId) {
+                this.engine.selectCourse(courseId);
+                this.updateCourseButtonsUI();
+                this.loadUserDataUI();
+                await this.engine.loadVocabData();
+                this.dom.totalQuestionsNum.textContent = this.engine.allQuestions.length;
+            }
+
+            async startGame() {
+                this.dom.startScreen.classList.add('hidden');
+                this.dom.gameOverScreen.classList.add('hidden');
+                this.dom.clearScreen.classList.add('hidden');
+                
+                await this.engine.loadVocabData();
+                this.dom.totalQuestionsNum.textContent = this.engine.allQuestions.length;
+                this.engine.startGame();
+            }
+
+            resetGame() {
+                this.dom.gameOverScreen.classList.add('hidden');
+                this.dom.clearScreen.classList.add('hidden');
+                this.startGame();
+            }
+
+            renderWordPool(words) {
+                this.dom.wordPool.innerHTML = '';
+                words.forEach(w => {
+                    const block = document.createElement('div');
+                    block.className = 'word-block';
+                    block.textContent = w.text;
+                    block.dataset.id = w.id;
+                    
+                    block.addEventListener('click', () => {
+                        this.engine.handleWordTap(w, 
+                            (wordObj, index) => {
+                                // 成功時のアニメーション
+                                block.classList.add('used');
+                                const slots = this.dom.answerBoard.querySelectorAll('.placed');
+                                const targetSlot = slots[index];
+                                targetSlot.textContent = wordObj.text;
+                                targetSlot.style.visibility = 'visible';
+                                targetSlot.style.borderStyle = 'solid';
+                                targetSlot.style.borderColor = 'transparent';
+                            },
+                            () => {
+                                // 失敗時のアニメーションと揺れ
+                                block.style.animation = 'shake 0.3s ease';
+                                setTimeout(() => block.style.animation = '', 300);
+                                this.dom.answerBoard.classList.add('error');
+                                setTimeout(() => this.dom.answerBoard.classList.remove('error'), 400);
+                            }
+                        );
+                    });
+                    this.dom.wordPool.appendChild(block);
+                });
+            }
+
+            updateStatsUI() {
+                // スコア、コンボ、ライフ
+                this.dom.scoreDisplay.textContent = this.engine.score;
+                
+                // ライフ表示
+                const hearts = this.dom.heartsContainer.querySelectorAll('.heart');
+                hearts.forEach((h, idx) => {
+                    if (idx < this.engine.lives) {
+                        h.classList.remove('lost');
+                    } else {
+                        h.classList.add('lost');
+                    }
+                });
+            }
+
+            updateTimerUI() {
+                if (!this.dom.timerDisplay || !this.dom.timerBar || !this.dom.timerBox) return;
+                
+                this.dom.timerDisplay.textContent = Math.max(this.engine.timeLeft, 0);
+                
+                const percentage = (this.engine.timeLeft / this.engine.maxTime) * 100;
+                this.dom.timerBar.style.width = Math.min(Math.max(percentage, 0), 100) + '%';
+                
+                if (this.engine.timeLeft <= 10) {
+                    this.dom.timerBox.classList.add('warning');
+                    this.dom.timerBar.classList.add('warning');
+                } else {
+                    this.dom.timerBox.classList.remove('warning');
+                    this.dom.timerBar.classList.remove('warning');
+                }
+            }
+
+            updateCourseButtonsUI() {
+                const btn2026 = document.getElementById('btn-course-2026');
+                const btn2025 = document.getElementById('btn-course-2025');
+                const btnCustom = document.getElementById('btn-course-custom');
+                
+                if (btn2026) btn2026.classList.remove('active');
+                if (btn2025) btn2025.classList.remove('active');
+                if (btnCustom) btnCustom.classList.remove('active');
+                
+                if (this.engine.currentActiveVocab === '2026_2027' && btn2026) btn2026.classList.add('active');
+                if (this.engine.currentActiveVocab === '2025_2026' && btn2025) btn2025.classList.add('active');
+                if (this.engine.currentActiveVocab === 'custom' && btnCustom) btnCustom.classList.add('active');
+            }
+
+            loadUserDataUI() {
+                const bestScore = localStorage.getItem('wc_best_score_' + this.engine.currentActiveVocab) || 0;
+                const totalLearned = parseInt(localStorage.getItem('wc_total_learned_' + this.engine.currentActiveVocab) || 0);
+                
+                this.dom.bestScoreDisplay.textContent = bestScore;
+                this.dom.totalLearnedDisplay.textContent = totalLearned;
+            }
+
+            toggleCustomModal() {
+                const modal = this.dom.customModal;
+                if (!modal) return;
+                
+                if (modal.classList.contains('hidden')) {
+                    if (this.dom.previewBadge) this.dom.previewBadge.style.display = 'none';
+                    modal.classList.remove('hidden');
+                    modal.style.setProperty('display', 'flex', 'important');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            handleFileImport(file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const text = event.target.result;
+                    this.dom.customVocabInput.value = text;
+                    
+                    const parsed = VocabularyParser.parse(text);
+                    if (parsed.length > 0) {
+                        this.dom.previewBadge.textContent = `解析成功: ${parsed.length}問の表現を検出！`;
+                        this.dom.previewBadge.style.display = 'inline-block';
+                        this.dom.previewBadge.style.color = 'var(--success)';
+                        this.dom.previewBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+                        this.engine.sound.playButton();
+                    } else {
+                        this.dom.previewBadge.textContent = `解析失敗: 有効な単語データなし`;
+                        this.dom.previewBadge.style.display = 'inline-block';
+                        this.dom.previewBadge.style.color = 'var(--danger)';
+                        this.dom.previewBadge.style.background = 'rgba(239, 68, 68, 0.1)';
+                        this.engine.sound.playError();
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+
+            saveCustomVocabulary() {
+                const newText = this.dom.customVocabInput.value.trim();
+                if (!newText) {
+                    alert("単語データが入力されていません。");
+                    return;
+                }
+
+                const checkParsed = VocabularyParser.parse(newText);
+                if (checkParsed.length === 0) {
+                    alert("有効な英単語データが解析できませんでした。フォーマット（例: Overwhelming 圧倒されるような）を確認してください。");
+                    return;
+                }
+
+                localStorage.setItem('custom_vocabulary_text', newText);
+                
+                const customBtn = document.getElementById('btn-course-custom');
+                if (customBtn) customBtn.style.display = 'flex';
+                
+                this.engine.currentActiveVocab = 'custom';
+                this.updateCourseButtonsUI();
+                
+                this.engine.allQuestions = checkParsed;
+                this.dom.totalQuestionsNum.textContent = checkParsed.length;
+                
+                alert(`単語データを正常に更新しました！
+解析された問題数: ${checkParsed.length}問
+「カスタム」コースとして選択されました！`);
+                
+                const title = document.querySelector('.screen-title');
+                if (title && !title.querySelector('.badge')) {
+                    title.innerHTML += '<span class="badge">カスタム適用中</span>';
+                }
+                
+                this.toggleCustomModal();
+                this.loadUserDataUI();
+                this.resetGame();
+            }
+        }
+
+        // ==========================================
+        // 7. アプリ起動と初期化の統合
+        // ==========================================
+        let sound, effect, engine, controller;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            sound = new SoundSynth();
+            const canvas = document.getElementById('effect-canvas');
+            effect = new ConfettiEffect(canvas);
+            engine = new GameEngine(sound, effect);
+            controller = new UIController(engine);
+
+            // グローバル関数のブリッジ (HTML側のインライン onclick との互換性を完全に保つためのインテリジェント設計)
+            window.selectCourse = (courseId) => controller.selectCourse(courseId);
+            window.startGame = () => controller.startGame();
+            window.resetGame = () => controller.resetGame();
+            window.clearAnswer = () => engine.clearAnswer();
+            window.skipQuestion = () => engine.skipQuestion();
+            window.toggleCustomModal = () => controller.toggleCustomModal();
+            window.saveCustomVocabulary = () => controller.saveCustomVocabulary();
+
+            // 初期のデータロード
+            const savedText = localStorage.getItem('custom_vocabulary_text');
+            if (savedText) {
+                const customBtn = document.getElementById('btn-course-custom');
+                if (customBtn) customBtn.style.display = 'flex';
+                engine.currentActiveVocab = 'custom';
+            } else {
+                engine.currentActiveVocab = '2026_2027';
+            }
+
+            controller.updateCourseButtonsUI();
+            controller.loadUserDataUI();
+            
+            // 起動時にデータを取得してパース
+            await engine.loadVocabData();
+            controller.dom.totalQuestionsNum.textContent = engine.allQuestions.length;
+            controller.dom.customVocabInput.value = savedText || defaultVocabulary2026_2027;
+
+            if (savedText) {
+                const title = document.querySelector('.screen-title');
+                if (title && !title.querySelector('.badge')) {
+                    title.innerHTML += '<span class="badge">カスタム適用中</span>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
